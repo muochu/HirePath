@@ -14,7 +14,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface KPISettingsData {
   dailyTarget: number;

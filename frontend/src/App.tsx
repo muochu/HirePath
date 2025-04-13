@@ -8,7 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import JobApplications from './pages/JobApplications';
 import KPISettings from './pages/KPISettings';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
