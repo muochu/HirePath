@@ -30,7 +30,7 @@ export const register = async (req: Request, res: Response) => {
 
     if (!process.env.JWT_SECRET) {
       console.error('JWT_SECRET is not set');
-      return res.status(500).json({ message: 'Server configuration error' });
+      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET is not set' });
     }
 
     try {
@@ -77,14 +77,16 @@ export const register = async (req: Request, res: Response) => {
       console.error('Error saving user:', saveError);
       return res.status(500).json({ 
         message: 'Error creating user',
-        error: saveError.message 
+        error: saveError.message,
+        stack: process.env.NODE_ENV === 'development' ? saveError.stack : undefined
       });
     }
   } catch (error: any) {
     console.error('Registration error:', error);
     res.status(500).json({ 
       message: 'Server error',
-      error: error.message
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
