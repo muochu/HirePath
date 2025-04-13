@@ -17,9 +17,10 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5000',
-  'https://hirepath-backend.onrender.com',
-  'https://hirepath.vercel.app',
-  'https://hirepath-git-main-yourusername.vercel.app',
+  'https://hirepath.onrender.com',
+  'https://hire-path-one.vercel.app',
+  'https://hire-path-one-git-main.vercel.app',
+  'https://hire-path-one-muochu.vercel.app'
 ];
 
 app.use(cors({
@@ -34,6 +35,8 @@ app.use(cors({
     return callback(null, true);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
