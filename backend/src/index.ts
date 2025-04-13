@@ -27,14 +27,18 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'https://hirepath.vercel.app',
-  'https://hirepath-frontend.vercel.app',
-  'https://hire-path-1x21raz09-muochus-projects.vercel.app'
+  'https://hirepath-frontend.vercel.app'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
+    
+    // Allow any Vercel subdomain
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
     
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
