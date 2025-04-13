@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme';
 import Layout from './components/Layout';
@@ -16,38 +16,36 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<Layout />}>
-              <Route
-                index
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="applications"
-                element={
-                  <PrivateRoute>
-                    <JobApplications />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <PrivateRoute>
-                    <KPISettings />
-                  </PrivateRoute>
-                }
-              />
-            </Route>
-          </Routes>
-        </Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Layout />}>
+            <Route
+              index
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="applications"
+              element={
+                <PrivateRoute>
+                  <JobApplications />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <PrivateRoute>
+                  <KPISettings />
+                </PrivateRoute>
+              }
+            />
+          </Route>
+        </Routes>
       </AuthProvider>
     </ThemeProvider>
   );

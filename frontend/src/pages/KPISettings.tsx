@@ -23,11 +23,11 @@ interface KPISettingsData {
 }
 
 const KPISettings: React.FC = () => {
-  const { } = useAuth();
+  const { user } = useAuth();
   const [settings, setSettings] = useState<KPISettingsData>({
-    dailyTarget: 10,
-    level: 'Just Looking',
-    dreamCompanies: [],
+    dailyTarget: user?.kpiSettings?.dailyTarget || 10,
+    level: (user?.kpiSettings?.level as KPISettingsData['level']) || 'Just Looking',
+    dreamCompanies: user?.kpiSettings?.dreamCompanies || [],
   });
   const [newCompany, setNewCompany] = useState('');
   const [loading, setLoading] = useState(true);
