@@ -85,13 +85,22 @@ const userSchema = new Schema<IUser>({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  const user = this;
+  console.log('Pre-save hook triggered for user:', user.email);
+
+  if (!user.isModified('password')) {
+    console.log('Password not modified, skipping hash');
+    return next();
+  }
   
   try {
+    console.log('Hashing password for user:', user.email);
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    user.password = await bcrypt.hash(user.password, salt);
+    console.log('Password hashed successfully');
     next();
   } catch (error: any) {
+    console.error('Error hashing password:', error);
     next(error);
   }
 });

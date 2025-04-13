@@ -6,69 +6,85 @@ import bcrypt from 'bcryptjs';
 
 export const register = async (req: Request, res: Response) => {
   try {
+    console.log('Registration request received:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      console.log('Missing required fields:', { email: !!email, password: !!password, name: !!name });
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      console.log('User already exists:', email);
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
     if (!process.env.JWT_SECRET) {
       console.error('JWT_SECRET is not set');
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+    try {
+      // Create new user
+      user = new User({
+        email,
+        password, // Will be hashed by the pre-save hook
+        name,
+        kpiSettings: {
+          dailyTarget: 10,
+          level: 'Just Looking',
+          dreamCompanies: [],
+        },
+        stats: {
+          totalApplications: 0,
+          applicationsThisMonth: 0,
+          applicationsThisWeek: 0,
+          applicationsToday: 0,
+          lastApplicationDate: null,
+        },
+      });
+
+      await user.save();
+      console.log('User created successfully:', user._id);
+
+      // Create JWT token
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          kpiSettings: user.kpiSettings,
+          stats: user.stats,
+        },
+      });
+    } catch (saveError: any) {
+      console.error('Error saving user:', saveError);
+      return res.status(500).json({ 
+        message: 'Error creating user',
+        error: saveError.message 
+      });
     }
-
-    // Create new user
-    user = new User({
-      email,
-      password,
-      name,
-      kpiSettings: {
-        dailyTarget: 10,
-        level: 'Just Looking',
-        dreamCompanies: [],
-      },
-      stats: {
-        totalApplications: 0,
-        applicationsThisMonth: 0,
-        applicationsThisWeek: 0,
-        applicationsToday: 0,
-        lastApplicationDate: null,
-      },
-    });
-
-    await user.save();
-
-    // Create JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        kpiSettings: user.kpiSettings,
-        stats: user.stats,
-      },
-    });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Registration error:', error);
     res.status(500).json({ 
       message: 'Server error',
-      details: process.env.NODE_ENV === 'development' ? 
-        error instanceof Error ? error.message : 'Unknown error' 
-        : undefined
+      error: error.message
     });
   }
 };

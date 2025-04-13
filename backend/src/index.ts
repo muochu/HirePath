@@ -23,37 +23,19 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5000',
-  'https://hirepath.onrender.com'
-];
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
-app.use(cors({
-  origin: function(origin, callback) {
-    console.log('Request origin:', origin);
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      console.log('No origin, allowing request');
-      return callback(null, true);
-    }
-    
-    // Allow all Vercel preview and production domains
-    if (origin.includes('vercel.app') || origin.includes('localhost') || allowedOrigins.includes(origin)) {
-      console.log('Origin allowed:', origin);
-      return callback(null, true);
-    }
-
-    console.log('Origin rejected:', origin);
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-  exposedHeaders: ['Content-Type', 'Authorization']
-}));
+// Parse JSON bodies
 app.use(express.json());
 
 // Database connection
