@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#2c7af8" />
+  
+  <!-- Paper document -->
+  <rect x="128" y="112" width="256" height="288" rx="16" fill="white" />
+  
+  <!-- Lines on the document -->
+  <rect x="160" y="160" width="192" height="16" rx="8" fill="#e5e5e5" />
+  <rect x="160" y="208" width="192" height="16" rx="8" fill="#e5e5e5" />
+  <rect x="160" y="256" width="144" height="16" rx="8" fill="#e5e5e5" />
+  
+  <!-- Check mark -->
+  <path d="M160 340 L216 392 L352 256" stroke="#4CAF50" stroke-width="32" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+</svg> 
