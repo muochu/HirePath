@@ -58,9 +58,38 @@ app.use(cors({
 app.use(express.json());
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hirepath')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hirepath', {
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 15000,
+  waitQueueTimeoutMS: 15000,
+})
+.then(() => {
+  console.log('Connected to MongoDB');
+  console.log('MongoDB URI:', process.env.MONGODB_URI?.replace(/:[^:@]*@/, ':****@')); // Hide password in logs
+})
+.catch((err) => {
+  console.error('MongoDB connection error:', {
+    message: err.message,
+    code: err.code,
+    name: err.name,
+    stack: err.stack
+  });
+  process.exit(1); // Exit if we can't connect to the database
+});
+
+// Add MongoDB connection error handlers
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
 
 // Routes
 app.use('/api/users', userRoutes);

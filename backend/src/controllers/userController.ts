@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -24,22 +25,29 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
-      console.log('User already exists:', email);
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET is not set');
-      return res.status(500).json({ message: 'Server configuration error: JWT_SECRET is not set' });
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected. Current state:', mongoose.connection.readyState);
+      return res.status(500).json({ message: 'Database connection error' });
     }
 
     try {
-      console.log('Attempting to create user with email:', email);
+      // Check if user already exists
+      console.log('Checking if user exists:', email);
+      const existingUser = await User.findOne({ email }).maxTimeMS(5000); // Add timeout
+      if (existingUser) {
+        console.log('User already exists:', email);
+        return res.status(400).json({ message: 'User already exists' });
+      }
+
+      if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not set');
+        return res.status(500).json({ message: 'Server configuration error: JWT_SECRET is not set' });
+      }
+
+      console.log('Creating new user...');
       // Create new user
-      user = new User({
+      const user = new User({
         email,
         password, // Will be hashed by the pre-save hook
         name,
@@ -57,7 +65,7 @@ export const register = async (req: Request, res: Response) => {
         },
       });
 
-      console.log('About to save user...');
+      console.log('Saving user...');
       await user.save();
       console.log('User created successfully:', user._id);
 
@@ -68,7 +76,6 @@ export const register = async (req: Request, res: Response) => {
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
-      console.log('JWT token created successfully');
 
       res.status(201).json({
         token,
@@ -83,15 +90,14 @@ export const register = async (req: Request, res: Response) => {
     } catch (saveError: any) {
       console.error('Error saving user:', {
         error: saveError.message,
-        stack: saveError.stack,
         code: saveError.code,
-        name: saveError.name
+        name: saveError.name,
+        stack: saveError.stack
       });
       return res.status(500).json({ 
         message: 'Error creating user',
         error: saveError.message,
         details: process.env.NODE_ENV === 'development' ? {
-          stack: saveError.stack,
           code: saveError.code,
           name: saveError.name
         } : undefined
@@ -100,15 +106,14 @@ export const register = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Registration error:', {
       error: error.message,
-      stack: error.stack,
       code: error.code,
-      name: error.name
+      name: error.name,
+      stack: error.stack
     });
     res.status(500).json({ 
       message: 'Server error',
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? {
-        stack: error.stack,
         code: error.code,
         name: error.name
       } : undefined
