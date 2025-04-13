@@ -1,11 +1,12 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-
-// Import routes
 import userRoutes from './routes/userRoutes';
 import jobApplicationRoutes from './routes/jobApplicationRoutes';
+import errorHandler from './middleware/errorHandler';
+import { protect as auth } from './middleware/auth';
+import AppError from './utils/AppError';
 
 // Load environment variables
 dotenv.config();
@@ -23,48 +24,49 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://hirepath.vercel.app',
+  'https://hirepath-frontend.vercel.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 
 // Parse JSON bodies
 app.use(express.json());
 
 // Database connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hirepath';
-mongoose.connect(MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hirepath')
   .then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.error('MongoDB connection error:', error));
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/users', userRoutes);
-app.use('/api/applications', jobApplicationRoutes);
+app.use('/api/applications', auth, jobApplicationRoutes);
+
+// Handle unhandled routes
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Basic route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to HirePath API' });
-});
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error details:', {
-    message: err.message,
-    stack: err.stack,
-    details: err
-  });
-  
-  res.status(err.status || 500).json({ 
-    message: err.message || 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err : {}
-  });
 });
 
 // Start server

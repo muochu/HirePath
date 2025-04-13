@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { AppError } from '../utils/AppError';
 
 interface JwtPayload {
-  userId: string;
+  id: string;
 }
 
 declare global {
@@ -14,24 +15,32 @@ declare global {
   }
 }
 
-export const auth = async (req: Request, res: Response, next: NextFunction) => {
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
-      throw new Error();
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw new AppError('Not authorized to access this route', 401);
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-    const user = await User.findById(decoded.userId);
+    const token = authHeader.split(' ')[1];
 
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+
+    // Get user from token
+    const user = await User.findById(decoded.id).select('-password');
     if (!user) {
-      throw new Error();
+      throw new AppError('User not found', 404);
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Please authenticate.' });
+    next(error);
   }
 }; 
