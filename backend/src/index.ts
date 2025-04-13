@@ -27,7 +27,8 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'https://hirepath.vercel.app',
-  'https://hirepath-frontend.vercel.app'
+  'https://hirepath-frontend.vercel.app',
+  'https://hire-path-etm2d79y-muochus-projects.vercel.app'
 ];
 
 app.use(cors({
@@ -35,18 +36,17 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Allow any Vercel subdomain
-    if (origin.endsWith('.vercel.app')) {
+    // Check if the origin is in allowed list or ends with vercel.app
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Parse JSON bodies
