@@ -27,7 +27,8 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'https://hirepath.vercel.app',
-  'https://hirepath-frontend.vercel.app'
+  'https://hirepath-frontend.vercel.app',
+  'https://hire-path-1x21raz09-muochus-projects.vercel.app'
 ];
 
 app.use(cors({
