@@ -1,6 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { auth } from '../middleware/auth';
+import { protect as auth } from '../middleware/auth';
+import { validate } from '../middleware/validation';
 import {
   createJobApplication,
   getJobApplications,
