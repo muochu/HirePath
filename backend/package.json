@@ -1,33 +1,40 @@
 {
   "name": "hirepath-backend",
   "version": "1.0.0",
-  "description": "Backend server for HirePath - Job Application Tracking Platform",
+  "description": "Backend for HirePath job application tracker",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "tsc"
   },
-  "keywords": ["job-search", "application-tracking", "career-management"],
+  "keywords": [
+    "job-search",
+    "application-tracking",
+    "career-management"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.6.3",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
-    "express-validator": "^7.0.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.1.0",
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
-    "@types/express": "^4.17.20",
-    "@types/node": "^20.8.7",
-    "@types/cors": "^2.8.15",
-    "@types/jsonwebtoken": "^9.0.4",
-    "@types/bcryptjs": "^2.4.5",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.5",
     "ts-node-dev": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
