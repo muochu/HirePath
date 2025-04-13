@@ -89,12 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string) => {
     try {
+      console.log('Attempting registration with:', { name, email });
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/register`, {
         name,
         email,
         password
       });
       
+      console.log('Registration successful:', response.data);
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       setUser(user);
@@ -103,7 +105,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Set default Authorization header for all future requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } catch (error: any) {
-      const message = error.response?.data?.message || 'An error occurred during registration';
+      console.error('Registration error details:', {
+        response: error.response?.data,
+        status: error.response?.status,
+        message: error.message
+      });
+      const message = error.response?.data?.message || error.message || 'Registration failed';
       setError(message);
       throw new Error(message);
     }

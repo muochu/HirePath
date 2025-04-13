@@ -11,7 +11,6 @@ import {
   Alert,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -19,15 +18,15 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
+    // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -39,15 +38,16 @@ const Register: React.FC = () => {
     }
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/users/register`, {
-        name,
-        email,
-        password,
-      });
+      setLoading(true);
       await register(name, email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      console.error('Registration error:', err);
+      setError(
+        err.response?.data?.message || 
+        err.message || 
+        'Failed to create an account. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -74,39 +74,36 @@ const Register: React.FC = () => {
           }}
         >
           <Typography component="h1" variant="h5">
-            Create your HirePath account
-          </Typography>
-          <Typography component="h2" variant="h6" sx={{ mt: 2, mb: 3 }}>
-            Start organizing your job search
+            Create Your Account
           </Typography>
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
               {error}
             </Alert>
           )}
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField
               margin="normal"
               required
               fullWidth
-              id="name"
               label="Full Name"
               name="name"
               autoComplete="name"
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={loading}
             />
             <TextField
               margin="normal"
               required
               fullWidth
-              id="email"
               label="Email Address"
               name="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -115,10 +112,10 @@ const Register: React.FC = () => {
               name="password"
               label="Password"
               type="password"
-              id="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -127,10 +124,10 @@ const Register: React.FC = () => {
               name="confirmPassword"
               label="Confirm Password"
               type="password"
-              id="confirmPassword"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
             />
             <Button
               type="submit"
@@ -139,7 +136,7 @@ const Register: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              Sign Up
+              {loading ? 'Creating Account...' : 'Sign Up'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link component={RouterLink} to="/login" variant="body2">
