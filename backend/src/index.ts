@@ -20,7 +20,9 @@ const allowedOrigins = [
   'https://hirepath.onrender.com',
   'https://hire-path-one.vercel.app',
   'https://hire-path-one-git-main.vercel.app',
-  'https://hire-path-one-muochu.vercel.app'
+  'https://hire-path-one-muochu.vercel.app',
+  'https://hire-path-il0ev4bak-muochus-projects.vercel.app',
+  'https://hire-path.vercel.app'
 ];
 
 app.use(cors({
@@ -28,11 +30,13 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    // Check if the origin contains vercel.app (for all preview deployments)
+    if (origin && (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin))) {
+      return callback(null, true);
     }
-    return callback(null, true);
+
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
