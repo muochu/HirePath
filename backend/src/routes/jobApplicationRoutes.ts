@@ -8,6 +8,7 @@ import {
   getJobApplication,
   updateJobApplication,
   deleteJobApplication,
+  createFromExtension,
 } from '../controllers/jobApplicationController';
 
 const router = express.Router();
@@ -24,8 +25,16 @@ const jobApplicationValidation = [
   body('isDreamCompany').optional().isBoolean().withMessage('isDreamCompany must be a boolean'),
 ];
 
+// Extension validation (less strict)
+const extensionValidation = [
+  body('companyName').notEmpty().withMessage('Company name is required'),
+  body('roleTitle').notEmpty().withMessage('Role title is required'),
+  body('jobPostUrl').optional().isURL().withMessage('Invalid job post URL'),
+];
+
 // Routes
 router.post('/', auth, jobApplicationValidation, createJobApplication);
+router.post('/extension', auth, extensionValidation, createFromExtension);
 router.get('/', auth, getJobApplications);
 router.get('/:id', auth, getJobApplication);
 router.put('/:id', auth, jobApplicationValidation, updateJobApplication);

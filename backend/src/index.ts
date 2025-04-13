@@ -28,18 +28,20 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'https://hirepath.vercel.app',
-  'https://hire-path-5fxz8qixq-muochus-projects.vercel.app'
+  'https://hire-path-5fxz8qixq-muochus-projects.vercel.app',
+  'chrome-extension://*'  // Allow Chrome extension requests
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl requests, or Chrome extensions)
     if (!origin) return callback(null, true);
     
-    // Allow localhost and any Vercel subdomain
+    // Allow localhost, any Vercel subdomain, or Chrome extensions
     if (
       origin === 'http://localhost:3000' ||
       origin.endsWith('.vercel.app') ||
+      origin.startsWith('chrome-extension://') ||
       allowedOrigins.includes(origin)
     ) {
       return callback(null, true);

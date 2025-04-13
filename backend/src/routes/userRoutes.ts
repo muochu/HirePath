@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   updateKPISettings,
   getUserStats,
+  extensionAuth
 } from '../controllers/userController';
 
 const router = express.Router();
@@ -30,11 +31,17 @@ const kpiSettingsValidation = [
   body('dreamCompanies').optional().isArray().withMessage('Dream companies must be an array'),
 ];
 
+// Extension validation
+const extensionTokenValidation = [
+  body('token').notEmpty().withMessage('Token is required'),
+];
+
 // Routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/extension/auth', extensionTokenValidation, extensionAuth);
 router.get('/me', auth, getCurrentUser);
-router.put('/kpi-settings', auth, kpiSettingsValidation, updateKPISettings);
+router.patch('/kpi-settings', auth, kpiSettingsValidation, updateKPISettings);
 router.get('/stats', auth, getUserStats);
 
 export default router; 

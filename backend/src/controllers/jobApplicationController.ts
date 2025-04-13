@@ -207,4 +207,56 @@ export const deleteJobApplication = async (req: Request, res: Response) => {
   } catch (error: unknown) {
     handleError(error, 'Delete job application error', res);
   }
+};
+
+// Create a job application from the Chrome extension
+export const createFromExtension = async (req: Request, res: Response) => {
+  try {
+    // Log the incoming request for debugging
+    console.log('Extension job capture request:', {
+      userId: req.user._id,
+      source: req.body.source,
+      companyName: req.body.companyName,
+      jobTitle: req.body.roleTitle
+    });
+
+    // Create a new job application object
+    const jobApplication = new JobApplication({
+      user: req.user._id,
+      companyName: req.body.companyName,
+      roleTitle: req.body.roleTitle,
+      status: req.body.status || 'To Apply',
+      jobPostUrl: req.body.jobPostUrl,
+      location: req.body.location,
+      isDreamCompany: req.body.isDreamCompany || false,
+      notes: req.body.notes || `Captured from ${req.body.source || 'browser extension'}`
+    });
+
+    // Check for duplicate entries
+    const existingApplication = await JobApplication.findOne({
+      user: req.user._id,
+      jobPostUrl: req.body.jobPostUrl
+    });
+
+    if (existingApplication) {
+      return res.status(409).json({ 
+        message: 'Job application already exists',
+        jobApplication: existingApplication
+      });
+    }
+
+    // Save the job application
+    await jobApplication.save();
+    
+    // Update user stats
+    await updateUserStats(req.user._id, true);
+    
+    // Return success response
+    res.status(201).json({
+      message: 'Job application saved successfully',
+      jobApplication
+    });
+  } catch (error: unknown) {
+    handleError(error, 'Create job application from extension error', res);
+  }
 }; 

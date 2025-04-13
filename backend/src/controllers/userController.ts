@@ -273,4 +273,52 @@ export const getUserStats = async (req: Request, res: Response) => {
     console.error('Get user stats error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Extension authentication for the Chrome extension
+export const extensionAuth = async (req: Request, res: Response) => {
+  try {
+    // Get the auth token from the request
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: 'Token is required' });
+    }
+
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+      
+      // Find the user
+      const user = await User.findById(decoded.id).select('-password');
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Return success with user info
+      res.json({
+        authenticated: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
+        }
+      });
+    } catch (error) {
+      return res.status(401).json({ 
+        message: 'Invalid or expired token',
+        authenticated: false
+      });
+    }
+  } catch (error: unknown) {
+    console.error('Extension auth error:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      authenticated: false,
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
+    });
+  }
 }; 
