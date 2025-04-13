@@ -51,6 +51,17 @@ const updateUserStats = async (userId: string, isNewApplication: boolean = false
   await user.save();
 };
 
+// Error handling helper
+const handleError = (error: unknown, errorContext: string, res: Response) => {
+  console.error(`${errorContext}:`, error);
+  res.status(500).json({ 
+    message: 'Server error',
+    details: process.env.NODE_ENV === 'development' ? 
+      error instanceof Error ? error.message : 'Unknown error' 
+      : undefined
+  });
+};
+
 // Create a new job application
 export const createJobApplication = async (req: Request, res: Response) => {
   try {
@@ -70,9 +81,8 @@ export const createJobApplication = async (req: Request, res: Response) => {
     await updateUserStats(req.user._id, true);
     
     res.status(201).json(jobApplication);
-  } catch (error) {
-    console.error('Create job application error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error: unknown) {
+    handleError(error, 'Create job application error', res);
   }
 };
 
@@ -128,9 +138,8 @@ export const getJobApplications = async (req: Request, res: Response) => {
       .exec();
 
     res.json(jobApplications);
-  } catch (error) {
-    console.error('Get job applications error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error: unknown) {
+    handleError(error, 'Get job applications error', res);
   }
 };
 
@@ -147,9 +156,8 @@ export const getJobApplication = async (req: Request, res: Response) => {
     }
 
     res.json(jobApplication);
-  } catch (error) {
-    console.error('Get job application error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error: unknown) {
+    handleError(error, 'Get job application error', res);
   }
 };
 
@@ -175,9 +183,8 @@ export const updateJobApplication = async (req: Request, res: Response) => {
     await updateUserStats(req.user._id);
 
     res.json(jobApplication);
-  } catch (error) {
-    console.error('Update job application error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error: unknown) {
+    handleError(error, 'Update job application error', res);
   }
 };
 
@@ -197,8 +204,7 @@ export const deleteJobApplication = async (req: Request, res: Response) => {
     await updateUserStats(req.user._id);
 
     res.json({ message: 'Job application deleted' });
-  } catch (error) {
-    console.error('Delete job application error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error: unknown) {
+    handleError(error, 'Delete job application error', res);
   }
 }; 

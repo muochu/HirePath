@@ -62,11 +62,13 @@ export const register = async (req: Request, res: Response) => {
         stats: user.stats,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
     res.status(500).json({ 
       message: 'Server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
     });
   }
 };
@@ -92,10 +94,15 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     // Create JWT token
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -109,9 +116,14 @@ export const login = async (req: Request, res: Response) => {
         stats: user.stats,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
+    });
   }
 };
 
@@ -122,9 +134,14 @@ export const getCurrentUser = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Get current user error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
+    });
   }
 };
 
@@ -162,9 +179,14 @@ export const updateKPISettings = async (req: Request, res: Response) => {
       message: 'KPI settings updated successfully',
       kpiSettings: user.kpiSettings,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Update KPI settings error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
+    });
   }
 };
 

@@ -13,34 +13,46 @@ dotenv.config();
 const app = express();
 
 // Middleware
+app.use((req, res, next) => {
+  console.log('Incoming request:', {
+    origin: req.headers.origin,
+    method: req.method,
+    path: req.path
+  });
+  next();
+});
+
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5000',
-  'https://hirepath.onrender.com',
-  'https://hire-path-one.vercel.app',
-  'https://hire-path-one-git-main.vercel.app',
-  'https://hire-path-one-muochu.vercel.app',
-  'https://hire-path-il0ev4bak-muochus-projects.vercel.app',
-  'https://hire-path.vercel.app'
+  'https://hirepath.onrender.com'
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    console.log('Request origin:', origin);
     
-    // Check if the origin contains vercel.app (for all preview deployments)
-    if (origin && (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin))) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      console.log('No origin, allowing request');
+      return callback(null, true);
+    }
+    
+    // Allow all Vercel preview and production domains
+    if (origin.includes('vercel.app') || origin.includes('localhost') || allowedOrigins.includes(origin)) {
+      console.log('Origin allowed:', origin);
       return callback(null, true);
     }
 
+    console.log('Origin rejected:', origin);
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  exposedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
