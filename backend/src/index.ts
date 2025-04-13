@@ -7,6 +7,7 @@ import jobApplicationRoutes from './routes/jobApplicationRoutes';
 import errorHandler from './middleware/errorHandler';
 import { protect as auth } from './middleware/auth';
 import AppError from './utils/AppError';
+import { NextFunction, Request, Response } from 'express';
 
 // Load environment variables
 dotenv.config();
@@ -27,8 +28,7 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'https://hirepath.vercel.app',
-  'https://hirepath-frontend.vercel.app',
-  'https://hire-path-etm2d79y-muochus-projects.vercel.app'
+  'https://hire-path-5fxz8qixq-muochus-projects.vercel.app'
 ];
 
 app.use(cors({
@@ -36,17 +36,22 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Check if the origin is in allowed list or ends with vercel.app
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    // Allow localhost and any Vercel subdomain
+    if (
+      origin === 'http://localhost:3000' ||
+      origin.endsWith('.vercel.app') ||
+      allowedOrigins.includes(origin)
+    ) {
       return callback(null, true);
     }
     
+    console.log('Blocked origin:', origin);
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 // Parse JSON bodies
@@ -68,6 +73,12 @@ app.all('*', (req, res, next) => {
 
 // Error handling middleware
 app.use(errorHandler);
+
+// Add error logging middleware
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Error:', err);
+  next(err);
+});
 
 // Basic route
 app.get('/', (req, res) => {

@@ -6,7 +6,10 @@ import bcrypt from 'bcryptjs';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    console.log('Registration request received:', req.body);
+    console.log('Registration request received:', {
+      ...req.body,
+      password: '[REDACTED]'
+    });
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -34,6 +37,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     try {
+      console.log('Attempting to create user with email:', email);
       // Create new user
       user = new User({
         email,
@@ -53,15 +57,18 @@ export const register = async (req: Request, res: Response) => {
         },
       });
 
+      console.log('About to save user...');
       await user.save();
       console.log('User created successfully:', user._id);
 
       // Create JWT token
+      console.log('Creating JWT token...');
       const token = jwt.sign(
         { id: user._id },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
+      console.log('JWT token created successfully');
 
       res.status(201).json({
         token,
@@ -74,19 +81,37 @@ export const register = async (req: Request, res: Response) => {
         },
       });
     } catch (saveError: any) {
-      console.error('Error saving user:', saveError);
+      console.error('Error saving user:', {
+        error: saveError.message,
+        stack: saveError.stack,
+        code: saveError.code,
+        name: saveError.name
+      });
       return res.status(500).json({ 
         message: 'Error creating user',
         error: saveError.message,
-        stack: process.env.NODE_ENV === 'development' ? saveError.stack : undefined
+        details: process.env.NODE_ENV === 'development' ? {
+          stack: saveError.stack,
+          code: saveError.code,
+          name: saveError.name
+        } : undefined
       });
     }
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', {
+      error: error.message,
+      stack: error.stack,
+      code: error.code,
+      name: error.name
+    });
     res.status(500).json({ 
       message: 'Server error',
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        code: error.code,
+        name: error.name
+      } : undefined
     });
   }
 };
