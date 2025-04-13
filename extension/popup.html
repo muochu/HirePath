@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>HirePath Saver</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="assets/logo.png" alt="HirePath Logo" class="logo">
+      <h1>HirePath Saver</h1>
+    </div>
+    
+    <div id="login-status" class="status-container">
+      <div id="logged-in" class="hidden">
+        <div class="status-text">
+          <span class="status-dot logged-in"></span>
+          <span>Logged in</span>
+        </div>
+        <button id="dashboard-btn" class="btn primary">Open Dashboard</button>
+        <button id="logout-btn" class="btn secondary">Log Out</button>
+      </div>
+      
+      <div id="logged-out">
+        <div class="status-text">
+          <span class="status-dot logged-out"></span>
+          <span>Not logged in</span>
+        </div>
+        <button id="login-btn" class="btn primary">Log In</button>
+      </div>
+    </div>
+    
+    <div id="job-action" class="action-container hidden">
+      <h2>Job detected!</h2>
+      <div class="job-info">
+        <p id="job-title">Job Title</p>
+        <p id="company-name">Company</p>
+      </div>
+      <button id="save-job-btn" class="btn primary">Save Job to HirePath</button>
+    </div>
+    
+    <div class="footer">
+      <a id="settings-link" href="#">Settings</a>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 

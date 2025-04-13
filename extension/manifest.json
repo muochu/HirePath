@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "HirePath Saver",
+  "version": "1.0.0",
+  "description": "Save job listings to your HirePath dashboard with one click.",
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://hirepath.onrender.com/*",
+    "https://www.linkedin.com/jobs/*",
+    "https://www.indeed.com/viewjob*",
+    "https://www.glassdoor.com/job-listing/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/jobs/*",
+        "https://www.indeed.com/viewjob*",
+        "https://www.glassdoor.com/job-listing/*"
+      ],
+      "js": ["content.js"]
+    },
+    {
+      "matches": [
+        "https://hirepath.onrender.com/*"
+      ],
+      "js": ["token-capture.js"]
+    }
+  ],
+  "options_page": "options.html"
+} 

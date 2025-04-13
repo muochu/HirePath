@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>HirePath Saver Settings</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #2c7af8;
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #2c7af8;
+    }
+    
+    .option-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    input[type="radio"] {
+      margin-right: 8px;
+    }
+    
+    .radio-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .radio-label {
+      font-weight: normal;
+    }
+    
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .button-container {
+      text-align: right;
+      margin-top: 30px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background-color: #2c7af8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #1c69e8;
+    }
+    
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      text-align: center;
+      display: none;
+    }
+    
+    .status.success {
+      background-color: #e8f5e9;
+      color: #4CAF50;
+      display: block;
+    }
+    
+    .status.error {
+      background-color: #ffebee;
+      color: #F44336;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HirePath Saver Settings</h1>
+    
+    <div class="section">
+      <h2>Account</h2>
+      <div id="account-status">Checking login status...</div>
+      <div id="login-actions" class="button-container" style="display: none;">
+        <button id="login-btn">Log in to HirePath</button>
+      </div>
+      <div id="logout-actions" class="button-container" style="display: none;">
+        <button id="logout-btn">Log out</button>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Visual Feedback</h2>
+      <div class="option-group">
+        <label>When a job is saved:</label>
+        
+        <div class="radio-option">
+          <input type="radio" id="feedback-check" name="feedback-style" value="check" checked>
+          <span class="radio-label">Pop & Check (Simple checkmark animation)</span>
+        </div>
+        
+        <div class="radio-option">
+          <input type="radio" id="feedback-confetti" name="feedback-style" value="confetti">
+          <span class="radio-label">Confetti Burst (Celebratory animation)</span>
+        </div>
+        
+        <div class="radio-option">
+          <input type="radio" id="feedback-card" name="feedback-style" value="card">
+          <span class="radio-label">Card Filed (Card filing animation)</span>
+        </div>
+        
+        <div class="radio-option">
+          <input type="radio" id="feedback-none" name="feedback-style" value="none">
+          <span class="radio-label">None (Only change button text)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Sound</h2>
+      <div class="checkbox-option">
+        <input type="checkbox" id="sound-enabled" checked>
+        <label for="sound-enabled" class="radio-label">Play sound when job is saved</label>
+      </div>
+    </div>
+    
+    <div class="button-container">
+      <button id="save-settings">Save Settings</button>
+    </div>
+    
+    <div id="status-message" class="status"></div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html> 

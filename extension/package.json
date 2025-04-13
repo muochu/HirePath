@@ -1,0 +1,12 @@
+{
+  "name": "hirepath-saver-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for saving job listings to HirePath dashboard",
+  "scripts": {
+    "generate-icons": "node assets/generate-icons.js",
+    "package": "zip -r hirepath-saver.zip manifest.json *.html *.js assets/* styles/*"
+  },
+  "devDependencies": {
+    "sharp": "^0.32.1"
+  }
+} 
