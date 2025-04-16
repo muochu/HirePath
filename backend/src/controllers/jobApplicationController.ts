@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { JobApplication } from '../models/JobApplication';
-import { User } from '../models/User';
+import User from '../models/user.model';
 import { validationResult } from 'express-validator';
 
 // Helper function to update user stats
@@ -65,24 +65,36 @@ const handleError = (error: unknown, errorContext: string, res: Response) => {
 // Create a new job application
 export const createJobApplication = async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    console.log('Creating job application with data:', {
+      ...req.body,
+      user: req.user._id
+    });
 
     const jobApplication = new JobApplication({
       ...req.body,
       user: req.user._id,
+      // Ensure dates are properly formatted
+      applicationDate: new Date(req.body.applicationDate),
+      submissionDeadline: req.body.submissionDeadline ? new Date(req.body.submissionDeadline) : undefined,
+      // Ensure boolean is properly typed
+      isDreamCompany: Boolean(req.body.isDreamCompany)
     });
 
+    console.log('Saving job application...');
     await jobApplication.save();
+    console.log('Job application saved successfully:', jobApplication._id);
     
     // Update user stats
     await updateUserStats(req.user._id, true);
     
     res.status(201).json(jobApplication);
-  } catch (error: unknown) {
-    handleError(error, 'Create job application error', res);
+  } catch (error: any) {
+    console.error('Error creating job application:', error);
+    res.status(400).json({ 
+      message: 'Failed to create job application',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    });
   }
 };
 

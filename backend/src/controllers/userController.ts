@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
+import User from '../models/user.model';
 import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { JobApplication } from '../models/JobApplication';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -34,7 +35,7 @@ export const register = async (req: Request, res: Response) => {
     try {
       // Check if user already exists
       console.log('Checking if user exists:', email);
-      const existingUser = await User.findOne({ email }).maxTimeMS(5000); // Add timeout
+      const existingUser = await User.findOne({ email }).maxTimeMS(5000);
       if (existingUser) {
         console.log('User already exists:', email);
         return res.status(400).json({ message: 'User already exists' });
@@ -49,8 +50,9 @@ export const register = async (req: Request, res: Response) => {
       // Create new user
       const user = new User({
         email,
-        password, // Will be hashed by the pre-save hook
+        password,
         name,
+        isGoogleUser: false,
         kpiSettings: {
           dailyTarget: 10,
           level: 'Just Looking',
@@ -94,6 +96,18 @@ export const register = async (req: Request, res: Response) => {
         name: saveError.name,
         stack: saveError.stack
       });
+      
+      // Check for validation errors
+      if (saveError.name === 'ValidationError') {
+        return res.status(400).json({ 
+          message: 'Validation error',
+          errors: Object.values(saveError.errors).map((err: any) => ({
+            field: err.path,
+            message: err.message
+          }))
+        });
+      }
+      
       return res.status(500).json({ 
         message: 'Error creating user',
         error: saveError.message,
@@ -134,6 +148,13 @@ export const login = async (req: Request, res: Response) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if user is a Google user
+    if (user.isGoogleUser) {
+      return res.status(400).json({ 
+        message: 'This account uses Google Sign-In. Please sign in with Google.'
+      });
     }
 
     // Check password
@@ -240,37 +261,94 @@ export const updateKPISettings = async (req: Request, res: Response) => {
 
 export const getUserStats = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user._id).select('stats kpiSettings');
+    const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Calculate progress towards daily goal
-    const progress = {
-      daily: {
-        current: user.stats.applicationsToday,
-        target: user.kpiSettings.dailyTarget,
-        percentage: Math.min(100, (user.stats.applicationsToday / user.kpiSettings.dailyTarget) * 100),
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get start of week (Sunday)
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    // Get start of month
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Count applications for different time periods
+    const [todayCount, weekCount, monthCount, totalCount] = await Promise.all([
+      JobApplication.countDocuments({
+        user: user._id,
+        applicationDate: { $gte: today }
+      }),
+      JobApplication.countDocuments({
+        user: user._id,
+        applicationDate: { $gte: startOfWeek }
+      }),
+      JobApplication.countDocuments({
+        user: user._id,
+        applicationDate: { $gte: startOfMonth }
+      }),
+      JobApplication.countDocuments({ user: user._id })
+    ]);
+
+    // Calculate progress percentages
+    const dailyTarget = user.kpiSettings?.dailyTarget || 10;
+    const weeklyTarget = dailyTarget * 7;
+    const monthlyTarget = dailyTarget * 30;
+
+    const stats = {
+      stats: {
+        totalApplications: totalCount,
+        applicationsThisMonth: monthCount,
+        applicationsThisWeek: weekCount,
+        applicationsToday: todayCount,
+        lastApplicationDate: user.stats?.lastApplicationDate
       },
-      weekly: {
-        current: user.stats.applicationsThisWeek,
-        target: user.kpiSettings.dailyTarget * 7,
-        percentage: Math.min(100, (user.stats.applicationsThisWeek / (user.kpiSettings.dailyTarget * 7)) * 100),
+      kpiSettings: user.kpiSettings || {
+        dailyTarget: 10,
+        level: 'Just Looking',
+        dreamCompanies: []
       },
-      monthly: {
-        current: user.stats.applicationsThisMonth,
-        target: user.kpiSettings.dailyTarget * 30,
-        percentage: Math.min(100, (user.stats.applicationsThisMonth / (user.kpiSettings.dailyTarget * 30)) * 100),
-      },
+      progress: {
+        daily: {
+          current: todayCount,
+          target: dailyTarget,
+          percentage: Math.min((todayCount / dailyTarget) * 100, 100)
+        },
+        weekly: {
+          current: weekCount,
+          target: weeklyTarget,
+          percentage: Math.min((weekCount / weeklyTarget) * 100, 100)
+        },
+        monthly: {
+          current: monthCount,
+          target: monthlyTarget,
+          percentage: Math.min((monthCount / monthlyTarget) * 100, 100)
+        }
+      }
     };
 
-    res.json({
-      stats: user.stats,
-      kpiSettings: user.kpiSettings,
-      progress,
-    });
-  } catch (error) {
+    // Update user's stats in the database
+    user.stats = {
+      totalApplications: totalCount,
+      applicationsThisMonth: monthCount,
+      applicationsThisWeek: weekCount,
+      applicationsToday: todayCount,
+      lastApplicationDate: user.stats?.lastApplicationDate
+    };
+    await user.save();
+
+    res.json(stats);
+  } catch (error: unknown) {
     console.error('Get user stats error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
+    });
   }
 }; 

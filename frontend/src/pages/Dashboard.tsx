@@ -14,6 +14,7 @@ import {
 import { Add as AddIcon, Settings as SettingsIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ApplicationStats {
   total: number;
@@ -63,6 +64,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
@@ -70,10 +72,17 @@ const Dashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+      setError('');
+      
+      console.log('Fetching dashboard data...');
       const [applicationsResponse, statsResponse] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/applications`),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/users/stats`),
+        axios.get('/api/applications'),
+        axios.get('/api/users/stats')
       ]);
+
+      console.log('Applications data:', applicationsResponse.data);
+      console.log('Stats data:', statsResponse.data);
 
       const applications = applicationsResponse.data;
       const statusCounts = applications.reduce((acc: { [key: string]: number }, app: any) => {
@@ -86,9 +95,9 @@ const Dashboard: React.FC = () => {
         byStatus: statusCounts,
       });
       setUserStats(statsResponse.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load dashboard data');
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      setError(error?.response?.data?.message || 'Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }

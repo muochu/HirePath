@@ -40,7 +40,7 @@ const KPISettings: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/me`);
+      const response = await axios.get(`${process.env.VITE_API_URL}/api/users/me`);
       setSettings(response.data.kpiSettings);
     } catch (error) {
       console.error('Error fetching KPI settings:', error);
@@ -56,7 +56,7 @@ const KPISettings: React.FC = () => {
     setSuccess('');
 
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/api/users/kpi-settings`, settings);
+      await axios.put(`${process.env.VITE_API_URL}/api/users/kpi-settings`, settings);
       setSuccess('KPI settings updated successfully');
     } catch (error) {
       console.error('Error updating KPI settings:', error);

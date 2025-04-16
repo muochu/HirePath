@@ -3,12 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -17,15 +11,15 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Link,
   Chip,
   FormControl,
   InputLabel,
   Select,
+  MenuItem,
   Grid,
-  FormControlLabel,
-  Switch,
+  TextField,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,20 +29,10 @@ import {
   Star as StarIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
+import { JobApplicationForm } from '../components/JobApplicationForm';
+import { JobApplication, JobApplicationFormData, JobApplicationStatus } from '../types/JobApplication';
 
-interface JobApplication {
-  _id: string;
-  companyName: string;
-  roleTitle: string;
-  status: string;
-  applicationDate: string;
-  submissionDeadline?: string;
-  isDreamCompany: boolean;
-  jobPostUrl?: string;
-  notes?: string;
-}
-
-const statusOptions = [
+const statusOptions: JobApplicationStatus[] = [
   'To Apply',
   'Applied',
   'Interviewing',
@@ -57,7 +41,7 @@ const statusOptions = [
   'Withdrawn',
 ];
 
-const statusColors: { [key: string]: string } = {
+const statusColors: { [key in JobApplicationStatus]: string } = {
   'To Apply': 'default',
   'Applied': 'primary',
   'Interviewing': 'warning',
@@ -70,35 +54,44 @@ const JobApplications: React.FC = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    companyName: '',
-    roleTitle: '',
-    status: 'To Apply',
-    submissionDeadline: '',
-    isDreamCompany: false,
-    jobPostUrl: '',
-    notes: '',
-  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     status: '',
     isDreamCompany: '',
     submissionDeadline: '',
     companyName: '',
   });
-  const [error, setError] = useState('');
 
   const fetchApplications = useCallback(async () => {
     try {
+      setLoading(true);
+      setError('');
       const queryParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, value);
       });
 
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/applications?${queryParams}`);
-      setApplications(response.data);
-    } catch (error) {
+      console.log('Fetching applications...');
+      const response = await axios.get<any[]>(`/api/applications?${queryParams}`);
+      console.log('Applications data:', response.data);
+      
+      // Transform the API response into JobApplication objects
+      const transformedApplications: JobApplication[] = response.data.map(app => ({
+        ...app,
+        _id: app._id, // Ensure _id is present
+        applicationDate: new Date(app.applicationDate),
+        submissionDeadline: app.submissionDeadline ? new Date(app.submissionDeadline) : null,
+        createdAt: app.createdAt ? new Date(app.createdAt) : undefined,
+        updatedAt: app.updatedAt ? new Date(app.updatedAt) : undefined,
+      }));
+      
+      setApplications(transformedApplications);
+    } catch (error: any) {
       console.error('Error fetching applications:', error);
-      setError('Failed to load applications');
+      setError(error?.response?.data?.message || 'Failed to load applications');
+    } finally {
+      setLoading(false);
     }
   }, [filters]);
 
@@ -108,62 +101,73 @@ const JobApplications: React.FC = () => {
 
   const handleOpen = () => {
     setOpen(true);
+    setError('');
   };
 
   const handleClose = () => {
     setOpen(false);
     setEditingId(null);
-    setFormData({
-      companyName: '',
-      roleTitle: '',
-      status: 'To Apply',
-      submissionDeadline: '',
-      isDreamCompany: false,
-      jobPostUrl: '',
-      notes: '',
-    });
+    setError('');
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (formData: JobApplicationFormData) => {
     try {
+      setLoading(true);
+      setError('');
+      console.log('Saving application:', formData);
+      
+      // Convert dates to ISO strings for the API
+      const apiData = {
+        ...formData,
+        applicationDate: formData.applicationDate.toISOString(),
+        submissionDeadline: formData.submissionDeadline?.toISOString() || null,
+      };
+      
       if (editingId) {
-        await axios.put(`${process.env.REACT_APP_API_URL}/api/applications/${editingId}`, formData);
+        await axios.put(`/api/applications/${editingId}`, apiData);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}/api/applications`, formData);
+        await axios.post('/api/applications', apiData);
       }
+      
       handleClose();
       fetchApplications();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving application:', error);
-      setError('Failed to save application');
+      throw new Error(error?.response?.data?.message || 'Failed to save application');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (application: JobApplication) => {
     setEditingId(application._id);
-    setFormData({
-      companyName: application.companyName,
-      roleTitle: application.roleTitle,
-      status: application.status,
-      submissionDeadline: application.submissionDeadline || '',
-      isDreamCompany: application.isDreamCompany,
-      jobPostUrl: application.jobPostUrl || '',
-      notes: application.notes || '',
-    });
+    setError('');
     setOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this application?')) {
       try {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/api/applications/${id}`);
+        setLoading(true);
+        setError('');
+        await axios.delete(`/api/applications/${id}`);
         fetchApplications();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting application:', error);
-        setError('Failed to delete application');
+        setError(error?.response?.data?.message || 'Failed to delete application');
+      } finally {
+        setLoading(false);
       }
     }
   };
+
+  if (loading && !open) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -272,11 +276,11 @@ const JobApplications: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  {new Date(application.applicationDate).toLocaleDateString()}
+                  {application.applicationDate.toLocaleDateString()}
                 </TableCell>
                 <TableCell>
                   {application.submissionDeadline
-                    ? new Date(application.submissionDeadline).toLocaleDateString()
+                    ? application.submissionDeadline.toLocaleDateString()
                     : '-'}
                 </TableCell>
                 <TableCell>
@@ -300,8 +304,7 @@ const JobApplications: React.FC = () => {
                   {application.jobPostUrl && (
                     <IconButton
                       size="small"
-                      href={application.jobPostUrl}
-                      target="_blank"
+                      onClick={() => window.open(application.jobPostUrl, '_blank')}
                     >
                       <LaunchIcon />
                     </IconButton>
@@ -313,103 +316,13 @@ const JobApplications: React.FC = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingId ? 'Edit Application' : 'Add New Application'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Company Name"
-              value={formData.companyName}
-              onChange={(e) =>
-                setFormData({ ...formData, companyName: e.target.value })
-              }
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Role Title"
-              value={formData.roleTitle}
-              onChange={(e) =>
-                setFormData({ ...formData, roleTitle: e.target.value })
-              }
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              select
-              label="Status"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
-              margin="normal"
-              required
-            >
-              {statusOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              type="date"
-              label="Submission Deadline"
-              value={formData.submissionDeadline}
-              onChange={(e) =>
-                setFormData({ ...formData, submissionDeadline: e.target.value })
-              }
-              margin="normal"
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.isDreamCompany}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isDreamCompany: e.target.checked })
-                  }
-                />
-              }
-              label="Dream Company"
-              sx={{ mt: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Job Post URL"
-              value={formData.jobPostUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, jobPostUrl: e.target.value })
-              }
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              margin="normal"
-              multiline
-              rows={4}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingId ? 'Save Changes' : 'Add Application'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <JobApplicationForm
+        open={open}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+        initialData={editingId ? applications.find(app => app._id === editingId) : undefined}
+        isEditing={!!editingId}
+      />
     </Box>
   );
 };

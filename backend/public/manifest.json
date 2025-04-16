@@ -1,0 +1,15 @@
+{
+  "short_name": "HirePath",
+  "name": "HirePath - Job Application Tracker",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2c7af8",
+  "background_color": "#ffffff"
+} 

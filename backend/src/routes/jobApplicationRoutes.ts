@@ -19,9 +19,26 @@ const jobApplicationValidation = [
   body('status')
     .isIn(['To Apply', 'Applied', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn'])
     .withMessage('Invalid status'),
-  body('jobPostUrl').optional().isURL().withMessage('Invalid job post URL'),
-  body('submissionDeadline').optional().isISO8601().withMessage('Invalid submission deadline date'),
-  body('isDreamCompany').optional().isBoolean().withMessage('isDreamCompany must be a boolean'),
+  body('applicationDate')
+    .isISO8601()
+    .withMessage('Invalid application date'),
+  body('jobPostUrl')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString()
+    .withMessage('Job post URL must be a string'),
+  body('submissionDeadline')
+    .optional({ nullable: true, checkFalsy: true })
+    .isISO8601()
+    .withMessage('Invalid submission deadline date'),
+  body('isDreamCompany')
+    .optional()
+    .isBoolean()
+    .withMessage('isDreamCompany must be a boolean'),
+  body('notes')
+    .optional()
+    .isString()
+    .withMessage('Notes must be a string'),
+  validate
 ];
 
 // Routes
